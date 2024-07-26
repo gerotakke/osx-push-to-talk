@@ -33,10 +33,35 @@ class Microphone {
         }
     }
     
+    func getDefaultInputDevice() -> AudioDeviceID {
+        var propertySize = UInt32(MemoryLayout<AudioDeviceID>.size)
+        var deviceID = kAudioDeviceUnknown
+        
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: AudioObjectPropertySelector(kAudioHardwarePropertyDefaultInputDevice),
+            mScope: AudioObjectPropertyScope(kAudioObjectPropertyScopeGlobal),
+            mElement: AudioObjectPropertyElement(kAudioObjectPropertyElementMaster))
+        
+        AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &propertyAddress, 0, nil, &propertySize, &deviceID)
+        
+        return deviceID
+    }
+
     func setupDeviceMenu(menu: NSMenu) throws {
         menu.removeAllItems()
         let devices = try? getInputDevices()
 
+        let selectedInputId = getDefaultInputDevice()
+
+        Swift.print("Looking for device ID '\(selectedInputId)'")
+        for device in devices! {
+            if device.id == selectedInputId {
+                self.selectedInput = device
+                Swift.print("Selecting device with ID '\(selectedInputId)'")
+            }
+        }
+
+        /*
         if UserDefaults.standard.integer(forKey: "prefSelectedInputId") != nil {
             let selectedInputId = UInt32(UserDefaults.standard.integer(forKey: "prefSelectedInputId"))
 
@@ -51,6 +76,7 @@ class Microphone {
         if self.selectedInput == nil { 
             self.selectedInput = devices![0]
         }
+        */
 
         for device in devices! {
             let item = DeviceMenuItem()
